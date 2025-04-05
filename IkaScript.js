@@ -10,21 +10,21 @@ let datos,
   console.log(settings);
 });*/
 
-$.ajax({
-  type: 'GET',
-  async: false,
-  url: 'battleTerrestre.html',
-  data: undefined,
-  beforeSend: function (xhr) {
-    xhr.overrideMimeType("text/html; charset=UTF-8");
-  },
-  success: function (data, status) {
-    datos = data;
-  },
-  error: function (xhr, status, error) {
-    console.log(error);
+async function fetchBattleData() {
+  try {
+    const response = await $.ajax({
+      type: 'GET',
+      url: 'battleTerrestre.html',
+      beforeSend: function (xhr) {
+        xhr.overrideMimeType("text/html; charset=UTF-8");
+      }
+    });
+    return response;
+  } catch (error) {
+    console.error("Error fetching battle data:", error);
+    return null;
   }
-});
+}
 
 String.prototype.BNS = function () { return this.replace(/[\n\r\t]/g, "").replace(/^s+|s+$/g, "").replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, ""); };
 
@@ -63,13 +63,24 @@ function getParticipantes(selector) {
   return participantes;
 }
 
-atacantes = getParticipantes("div#troopsReport div.attacker span > a");
-defensores = getParticipantes("div#troopsReport div.defender span > a");
-ciudad = $(datos).find("div#troopsReport h3.header")[0].firstChild.textContent.BNS().replace("Batalla en", "Batalla terrestre en").replace("Batalla maritima", "Batalla marítima");
+async function init() {
+  datos = await fetchBattleData();
+  if (datos) {
+    atacantes = getParticipantes("div#troopsReport div.attacker span > a");
+    defensores = getParticipantes("div#troopsReport div.defender span > a");
+    ciudad = $(datos).find("div#troopsReport h3.header")[0].firstChild.textContent.BNS()
+      .replace("Batalla en", "Batalla terrestre en")
+      .replace("Batalla maritima", "Batalla marítima");
 
-console.log(atacantes);
-console.log(defensores);
-console.log(ciudad);
+    console.log(atacantes);
+    console.log(defensores);
+    console.log(ciudad);
+
+    tropas = getUnidades();
+  }
+}
+
+init();
 
 let vencedores = $(datos).find("div#troopsReport div.result div.winners").text().BNS();
 if (vencedores.split(",").length > 1)
